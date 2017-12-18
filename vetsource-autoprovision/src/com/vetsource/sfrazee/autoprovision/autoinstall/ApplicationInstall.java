@@ -4,10 +4,10 @@ import java.io.IOException;
 
 public class ApplicationInstall {
 
-	private String appName; 					//The name of the application that's going to be installed
-	private String appPath;						//The location of the installer executable
-	private String appExtension;
-	private boolean supportsAutomaticInstall;	//Whether or not we can install this without interacting with a window
+	private String appName; 					//The name of the application that's going to be installed for reporting purposes
+	private String appPath;						//The path of the installer executable
+	private String appExtension;				//Filename extension for this executable
+	private boolean supportsAutomaticInstall;	//Whether or not we can install this without interacting with a window (currently unused)
 	private String quietArgs;					//The executable arguments we can use to install this application silently
 	private String execName;
 	private Process installerProcess;

@@ -29,7 +29,8 @@ public class ConfigData {
 	public Map<String, Object> getVariables() {
 		return this.variableStore;
 	}
-
+	
+	//Passthrough methods for interacting with the stored hashmap
 	public Object getVariable(String key) {
 		return this.variableStore.get(key);
 	}
