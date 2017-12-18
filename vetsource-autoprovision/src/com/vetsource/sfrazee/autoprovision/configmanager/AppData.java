@@ -4,6 +4,7 @@ import java.io.File;
 
 public class AppData extends ConfigData {
 	
+	//Constructors are more detailed than the general ConfigData Class
 	public AppData(String appName, String execName, String args) {
 		this.setVariable("name", appName);
 		this.setVariable("execName", execName);
@@ -27,9 +28,9 @@ public class AppData extends ConfigData {
 		this.setVariable("execName", null);
 		this.setVariable("args", null);
 	}
+
 	
-	
-	
+	//Getters and setters for AppData specific variables for ease of use
 	public String getExecName() {
 		return (String)this.getVariable("execName");
 	}

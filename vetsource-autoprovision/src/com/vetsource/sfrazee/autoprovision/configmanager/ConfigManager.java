@@ -3,6 +3,7 @@ package com.vetsource.sfrazee.autoprovision.configmanager;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -65,7 +66,7 @@ public class ConfigManager {
 			// VVV
 			// |app
 			// variable=something
-			// goestoeleven=11
+			// amplevel=11
 			//
 			//
 			//
@@ -236,8 +237,8 @@ public class ConfigManager {
 
 		return appList;
 	}
-	
-	//Vanity printing method
+
+	// Vanity printing method
 	public void printConfig() {
 		System.out.println("\n-----Config loaded from " + this.configName + ".conf -----");
 
@@ -258,6 +259,7 @@ public class ConfigManager {
 		}
 	}
 
+	// Simple check to see if a named config existsd
 	public boolean dataConfigExists(String configName) {
 		for (int i = 0; i < configData.size(); i++) {
 			if (configData.get(i).getName().equals(configName)) {
@@ -267,11 +269,67 @@ public class ConfigManager {
 		return false;
 	}
 
+	// Get config data by index
 	public ConfigData getData(int id) {
 		return configData.get(id);
 	}
 
+	// Get all the data in an array
 	public ConfigData[] getDataConfigs() {
 		return configData.toArray(new ConfigData[configData.size()]);
+	}
+
+	// Method to scan the installers folder and add the unlist
+	public String[] addUnlistedExecutables(boolean recursive) {
+		// Create a list to hold all the executables we find. If no executables are
+		// found, it will return a null value
+		ArrayList<String> foundExecutables = null;
+
+		// If we haven't loaded config yet, we should do that first
+		if (!dataLoaded) {
+			this.loadConfig();
+		}
+
+		// Create an instance of ExecutableScanner to do the actual searching for
+		// executables
+		ExecutableScanner execScanner = new ExecutableScanner("installers", recursive);
+
+		// Get the list of all executables
+		String[] paths = execScanner.scan();
+
+		// Loop through all the found executables
+		for (int i = 0; i < paths.length; i++) {
+			String thisPath = paths[i];
+			boolean foundExecConfig = false;
+
+			// Loop through all the configuration objects
+			for (int j = 0; j < configData.size(); j++) {
+				ConfigData thisConfig = configData.get(j);
+
+				// Since we're looking for executable paths, we only check AppData files
+				if (thisConfig.getClass().isInstance(new AppData())) {
+					AppData thisAppConfig = (AppData) thisConfig;
+
+					// If the executable path and the config path are the same, exit this loop
+					if (thisAppConfig.getExecName().equals(thisPath)) {
+						foundExecConfig = true;
+						break;
+					}
+				}
+			}
+
+			// If we looped through all the config files and didn't fin anything, add the
+			// path to the return list and also create a config object for that executable
+			if (!foundExecConfig) {
+				if (foundExecutables == null) {
+					foundExecutables = new ArrayList<String>();
+				}
+				foundExecutables.add(thisPath);
+				this.configData.add(new AppData(thisPath));
+			}
+		}
+		
+		//Return the list of executables that didn't match any config files
+		return foundExecutables.toArray(new String[foundExecutables.size()]);
 	}
 }

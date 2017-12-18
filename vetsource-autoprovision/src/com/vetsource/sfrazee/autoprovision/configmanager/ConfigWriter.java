@@ -19,7 +19,7 @@ public class ConfigWriter {
 	}
 	
 	
-	
+	//Check that the config file being written to exists
 	public boolean checkFileExists(boolean create) {
 		if (configFile.exists()) {
 			return true;
@@ -37,6 +37,7 @@ public class ConfigWriter {
 		}
 	}
 	
+	//Close the writer to prevent IO exceptions
 	public void close() {
 		if(open) {
 			try {
@@ -53,6 +54,7 @@ public class ConfigWriter {
 		}
 	}
 	
+	//Open the writing stream to edit the file
 	public void open() {
 		if(!open) {
 			try {
@@ -69,20 +71,33 @@ public class ConfigWriter {
 		}
 	}
 	
+	//Write all configs in a given array to the file
 	public void writeAllConfigs(Map<String, Object>[] configs) {
+		//Close the file so we don't cause IO errors
 		this.close();
+		
+		//Empty the file so we don't get duplicate entries
 		this.emptyFile();
+		
+		//Call the writeConfigs method to write the given configs to the file
 		this.writeConfigs(configs);
+		
+		//Close the file
 		this.close();
 	}
 	
+	//Write a single config entry to the config file
 	public void writeConfig(Map<String, Object> config) {
+		
+		//If the file isn't already open, open it to prevent IO exceptions
 		if(!open) {
 			this.open();
 		}
-		String[] configStrings = mapToStrings(config);
-		System.out.println(Arrays.toString(configStrings));
 		
+		//Convert our map of variables into their string representations
+		String[] configStrings = mapToStrings(config);
+		
+		//Loop through all the string variables
 		for(int i = 0; i < configStrings.length; i++) {
 			try {
 				configBufferedWriter.write(configStrings[i]);
