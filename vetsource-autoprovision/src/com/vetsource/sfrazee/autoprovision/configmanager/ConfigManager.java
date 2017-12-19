@@ -3,8 +3,6 @@ package com.vetsource.sfrazee.autoprovision.configmanager;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Map;
 
 //This class does everything related to app configuration files.
@@ -119,9 +117,6 @@ public class ConfigManager {
 		// writer
 		ConfigWriter configWriter = new ConfigWriter("config/apps.test.conf");
 
-		// Need a temporary map to hold config values as we pass them to the writer
-		Map<String, Object> configMap = new HashMap<String, Object>();
-
 		// Open the IO stream to the file
 		configWriter.open();
 		for (int i = 0; i < configData.size(); i++) {
@@ -213,14 +208,6 @@ public class ConfigManager {
 				}
 			}
 			return false;
-		}
-	}
-
-	// Delete the config file
-	private void deleteConfigFile() {
-		File configFile = new File(this.configPath);
-		if (configFile.exists()) {
-			configFile.delete();
 		}
 	}
 

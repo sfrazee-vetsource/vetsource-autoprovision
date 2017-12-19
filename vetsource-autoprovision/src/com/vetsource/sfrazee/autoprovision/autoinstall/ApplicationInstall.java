@@ -7,7 +7,6 @@ public class ApplicationInstall {
 	private String appName; 					//The name of the application that's going to be installed for reporting purposes
 	private String appPath;						//The path of the installer executable
 	private String appExtension;				//Filename extension for this executable
-	private boolean supportsAutomaticInstall;	//Whether or not we can install this without interacting with a window (currently unused)
 	private String quietArgs;					//The executable arguments we can use to install this application silently
 	private String execName;
 	private Process installerProcess;
@@ -20,22 +19,12 @@ public class ApplicationInstall {
 		this.appPath = "\"installers/" + execName + "\"";
 		this.quietArgs = quietArgs;
 		this.appExtension = getExtension();
-		supportsAutomaticInstall = true;
 	}
 	
 	public ApplicationInstall(String execName) {
 		this.appPath = "\"installers/" + execName + "\"";
 		this.execName = execName;
 		this.appName = execName;
-		supportsAutomaticInstall = false;
-	}
-	
-	private void updateAutomatic() {
-		if(appName != null && appPath != null && quietArgs != null) {
-			supportsAutomaticInstall = true;
-		} else {
-			supportsAutomaticInstall = false;
-		}
 	}
 	
 	public int startInstall() {
@@ -120,7 +109,6 @@ public class ApplicationInstall {
 	
 	public void setName(String appName) {
 		this.appName = appName;
-		updateAutomatic();
 	}
 	
 	public String getPath() {
@@ -129,7 +117,6 @@ public class ApplicationInstall {
 	
 	public void setPath(String appPath) {
 		this.appPath = appPath;
-		updateAutomatic();
 	}
 	
 	public String getQuietArgs() {

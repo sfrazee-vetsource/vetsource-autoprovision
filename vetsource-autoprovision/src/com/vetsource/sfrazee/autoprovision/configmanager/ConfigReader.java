@@ -259,7 +259,7 @@ public class ConfigReader {
 	}
 
 	//Method to return all the configs from the file at once instead of one at a time
-	public HashMap[] readAllConfigs() {
+	public HashMap<String, Object>[] readAllConfigs() {
 		//Create an empty list of hashmaps to hold the variables
 		ArrayList<HashMap<String, Object>> allConfigs = new ArrayList<HashMap<String, Object>>();
 		

@@ -7,10 +7,8 @@ import com.vetsource.sfrazee.autoprovision.configmanager.AppData;
 public class InstallManager {
 
 	private ArrayList<ApplicationInstall> installers = new ArrayList<ApplicationInstall>();
-	private String directory;
 
-	public InstallManager(String directory, String configName) {
-		this.directory = directory;
+	public InstallManager(String configName) {
 	}
 
 	// Install all the applications listed in an array of AppData objects
