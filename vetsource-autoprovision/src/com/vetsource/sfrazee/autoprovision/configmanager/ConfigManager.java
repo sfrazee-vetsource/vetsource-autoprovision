@@ -27,6 +27,246 @@ public class ConfigManager {
 
 	}
 
+	// Adding a data config just creates a data object with the specified name
+	public void addDataConfig(String configName) {
+
+		// Make sure we don't have duplicate data
+		if (!dataConfigExists(configName)) {
+			configData.add(new ConfigData(configName));
+		}
+	}
+
+	// Method to scan the installers folder and add the unlist
+	public String[] addUnlistedExecutables(boolean recursive) {
+		// Create a list to hold all the executables we find. If no executables are
+		// found, it will return a null value
+		ArrayList<String> foundExecutables = null;
+
+		// If we haven't loaded config yet, we should do that first
+		if (!dataLoaded) {
+			this.loadConfig();
+		}
+
+		// Create an instance of ExecutableScanner to do the actual searching for
+		// executables
+		ExecutableScanner execScanner = new ExecutableScanner("installers", recursive);
+
+		// Get the list of all executables
+		String[] paths = execScanner.scan();
+
+		// Loop through all the found executables
+		for (int i = 0; i < paths.length; i++) {
+			String thisPath = paths[i];
+			boolean foundExecConfig = false;
+
+			// Loop through all the configuration objects
+			for (int j = 0; j < configData.size(); j++) {
+				ConfigData thisConfig = configData.get(j);
+
+				// Since we're looking for executable paths, we only check AppData files
+				if (thisConfig.getClass().isInstance(new AppData())) {
+					AppData thisAppConfig = (AppData) thisConfig;
+
+					// If the executable path and the config path are the same, exit this loop
+					if (thisAppConfig.getExecName().equals(thisPath)) {
+						foundExecConfig = true;
+						break;
+					}
+				}
+			}
+
+			// If we looped through all the config files and didn't fin anything, add the
+			// path to the return list and also create a config object for that executable
+			if (!foundExecConfig) {
+				if (foundExecutables == null) {
+					foundExecutables = new ArrayList<String>();
+				}
+				foundExecutables.add(thisPath);
+				this.configData.add(new AppData(thisPath));
+			}
+		}
+
+		// Return the list of executables that didn't match any config files
+		return foundExecutables.toArray(new String[foundExecutables.size()]);
+	}
+
+	// Change some data in the config arraylist
+	public void changeConfig(String configName, String variableName, String value) {
+		int appId = -1;
+
+		for (int i = 0; i < configData.size(); i++) {
+			String thisName = configData.get(i).getName();
+			if (thisName.equals(configName)) {
+				appId = i;
+			}
+		}
+
+		// If we actually found an app with the right name, just call the setVariable
+		// method for that object with the values we passed in at the beginning
+		if (appId != -1) {
+
+			configData.get(appId).setVariable(variableName, value);
+		}
+	}
+
+	// Check to see if the config file already exists, and if it doesn't, maybe
+	// (if we passed true at the beginning) create it
+	private boolean checkFileExists(boolean create) {
+		File configFile = new File(this.configPath);
+		if (configFile.exists()) {
+			return true;
+		} else {
+			// If we sent true at the beginning, create the file if it doesn't already exist
+			if (create) {
+				try {
+					configFile.createNewFile();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+			return false;
+		}
+	}
+
+	public String[] checkMissingExecutables() {
+		ArrayList<String> missingExecutables = null;
+
+		for (int i = 0; i < configData.size(); i++) {
+			ConfigData thisConfig = configData.get(i);
+			if (configData.get(i).getClass().isInstance(new AppData())) {
+				AppData thisAppConfig = (AppData) thisConfig;
+
+				if (!thisAppConfig.executableExists()) {
+					if (missingExecutables == null) {
+						missingExecutables = new ArrayList<>();
+					}
+
+					missingExecutables.add(thisAppConfig.getName());
+				}
+			}
+		}
+
+		if (missingExecutables == null) {
+			return null;
+		} else {
+			return missingExecutables.toArray(new String[missingExecutables.size()]);
+		}
+	}
+
+	// Simple check to see if a named config existsd
+	public boolean dataConfigExists(String configName) {
+		return (getConfigData(configName) != null);
+	}
+
+	// If we already have the object associated with a data config entry, we can
+	// delete it directly
+	public void delDataConfig(ConfigData dataConfig) {
+		configData.remove(dataConfig);
+	}
+
+	// Remove a data config object from the master list
+	public void delDataConfig(int id) {
+		configData.remove(id);
+	}
+
+	// Delete a data config
+	public void delDataConfig(String configName) {
+		if (dataConfigExists(configName)) {
+			for (int i = 0; i < configData.size(); i++) {
+
+				// Find the config with the specified name, get it's index in the list, then
+				// just pass that index to the delDataConfig method for ints
+				if (configData.get(i).getName().equals(configName)) {
+					delDataConfig(i);
+				}
+			}
+		}
+	}
+
+	public String[] disableMissingExecutables(boolean enableFound) {
+
+		String[] missingExecutables = checkMissingExecutables();
+
+		if (missingExecutables == null) {
+			return null;
+		}
+
+		for (int i = 0; i < configData.size(); i++) {
+			ConfigData thisConfig = configData.get(i);
+
+			if (thisConfig.getClass().isInstance(new AppData())) {
+				AppData thisAppConfig = (AppData) thisConfig;
+
+				String thisName = thisConfig.getName();
+				for (int j = 0; j < missingExecutables.length; j++) {
+					if (thisName.equals(missingExecutables[j])) {
+						System.out.println("Disabled " + thisName);
+						thisConfig.setVariable("install", false);
+					} else if (enableFound) {
+						System.out.println("Enabled " + thisName);
+						thisConfig.setVariable("install", true);
+					}
+				}
+			}
+		}
+
+		return missingExecutables;
+	}
+
+	public ConfigData getConfigData(String configName) {
+		ConfigData returnConfig = null;
+
+		for (int i = 0; i < this.configData.size(); i++) {
+			ConfigData thisConfig = this.configData.get(i);
+			if (thisConfig.getName().equals(configName)) {
+				returnConfig = thisConfig;
+				break;
+			}
+		}
+
+		return returnConfig;
+	}
+
+	// Get config data by index
+	public ConfigData getData(int id) {
+		return configData.get(id);
+	}
+
+	// Get all the data in an array
+	public ConfigData[] getDataConfigs() {
+		return configData.toArray(new ConfigData[configData.size()]);
+	}
+
+	public AppData[] getDataConfigs(AppData obj) {
+		ArrayList<AppData> returnData = null;
+
+		for (int i = 0; i < this.configData.size(); i++) {
+			if (this.configData.get(i).getClass().isInstance(obj)) {
+				if (returnData == null) {
+					returnData = new ArrayList<AppData>();
+				}
+
+				returnData.add((AppData) this.configData.get(i));
+			}
+		}
+
+		return returnData.toArray(new AppData[returnData.size()]);
+	}
+
+	// Return an array of data of the objects that we currently have in config
+	public String[] getDataFromConfig() {
+		if (!dataLoaded) {
+			loadConfig();
+		}
+
+		String[] appList = new String[configData.size()];
+		for (int i = 0; i < configData.size(); i++) {
+			appList[i] = configData.get(i).getName();
+		}
+
+		return appList;
+	}
+
 	// The main method for loading the file and parsing data from it
 	public void loadConfig() {
 
@@ -106,6 +346,27 @@ public class ConfigManager {
 
 	}
 
+	// Vanity printing method
+	public void printConfig() {
+		System.out.println("\n-----Config loaded from " + this.configName + ".conf -----");
+
+		for (int i = 0; i < configData.size(); i++) {
+			ConfigData thisConfig = this.getData(i);
+
+			System.out.println("Config# " + i + ": " + thisConfig.getName());
+
+			String[] keys = thisConfig.getVariables().keySet().toArray(new String[thisConfig.getVariables().size()]);
+
+			for (int j = 0; j < keys.length; j++) {
+				if (!keys[j].equals("name")) {
+					System.out.println(keys[j] + ": " + thisConfig.getVariable(keys[j]));
+				}
+			}
+
+			System.out.println();
+		}
+	}
+
 	// Write the current stored configuration to the config file
 	public void writeToConfigFile() {
 		if (!dataLoaded) {
@@ -137,186 +398,5 @@ public class ConfigManager {
 
 		// Close the IO stream to the file so we don't have problems later
 		configWriter.close();
-	}
-
-	// Adding a data config just creates a data object with the specified name
-	public void addDataConfig(String configName) {
-
-		// Make sure we don't have duplicate data
-		if (!dataConfigExists(configName)) {
-			configData.add(new ConfigData(configName));
-		}
-	}
-
-	// Delete a data config
-	public void delDataConfig(String configName) {
-		if (dataConfigExists(configName)) {
-			for (int i = 0; i < configData.size(); i++) {
-
-				// Find the config with the specified name, get it's index in the list, then
-				// just pass that index to the delDataConfig method for ints
-				if (configData.get(i).getName().equals(configName)) {
-					delDataConfig(i);
-				}
-			}
-		}
-	}
-
-	// Remove a data config object from the master list
-	public void delDataConfig(int id) {
-		configData.remove(id);
-	}
-
-	// If we already have the object associated with a data config entry, we can
-	// delete it directly
-	public void delDataConfig(ConfigData dataConfig) {
-		configData.remove(dataConfig);
-	}
-
-	// Change some data in the config arraylist
-	public void changeConfig(String configName, String variableName, String value) {
-		int appId = -1;
-
-		for (int i = 0; i < configData.size(); i++) {
-			String thisName = configData.get(i).getName();
-			if (thisName.equals(configName)) {
-				appId = i;
-			}
-		}
-
-		// If we actually found an app with the right name, just call the setVariable
-		// method for that object with the values we passed in at the beginning
-		if (appId != -1) {
-
-			configData.get(appId).setVariable(variableName, value);
-		}
-	}
-
-	// Check to see if the config file already exists, and if it doesn't, maybe
-	// (if we passed true at the beginning) create it
-	private boolean checkFileExists(boolean create) {
-		File configFile = new File(this.configPath);
-		if (configFile.exists()) {
-			return true;
-		} else {
-			// If we sent true at the beginning, create the file if it doesn't already exist
-			if (create) {
-				try {
-					configFile.createNewFile();
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-			}
-			return false;
-		}
-	}
-
-	// Return an array of data of the objects that we currently have in config
-	public String[] getDataFromConfig() {
-		if (!dataLoaded) {
-			loadConfig();
-		}
-
-		String[] appList = new String[configData.size()];
-		for (int i = 0; i < configData.size(); i++) {
-			appList[i] = configData.get(i).getName();
-		}
-
-		return appList;
-	}
-
-	// Vanity printing method
-	public void printConfig() {
-		System.out.println("\n-----Config loaded from " + this.configName + ".conf -----");
-
-		for (int i = 0; i < configData.size(); i++) {
-			ConfigData thisConfig = this.getData(i);
-
-			System.out.println("Config# " + i + ": " + thisConfig.getName());
-
-			String[] keys = thisConfig.getVariables().keySet().toArray(new String[thisConfig.getVariables().size()]);
-
-			for (int j = 0; j < keys.length; j++) {
-				if (!keys[j].equals("name")) {
-					System.out.println(keys[j] + ": " + thisConfig.getVariable(keys[j]));
-				}
-			}
-
-			System.out.println();
-		}
-	}
-
-	// Simple check to see if a named config existsd
-	public boolean dataConfigExists(String configName) {
-		for (int i = 0; i < configData.size(); i++) {
-			if (configData.get(i).getName().equals(configName)) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	// Get config data by index
-	public ConfigData getData(int id) {
-		return configData.get(id);
-	}
-
-	// Get all the data in an array
-	public ConfigData[] getDataConfigs() {
-		return configData.toArray(new ConfigData[configData.size()]);
-	}
-
-	// Method to scan the installers folder and add the unlist
-	public String[] addUnlistedExecutables(boolean recursive) {
-		// Create a list to hold all the executables we find. If no executables are
-		// found, it will return a null value
-		ArrayList<String> foundExecutables = null;
-
-		// If we haven't loaded config yet, we should do that first
-		if (!dataLoaded) {
-			this.loadConfig();
-		}
-
-		// Create an instance of ExecutableScanner to do the actual searching for
-		// executables
-		ExecutableScanner execScanner = new ExecutableScanner("installers", recursive);
-
-		// Get the list of all executables
-		String[] paths = execScanner.scan();
-
-		// Loop through all the found executables
-		for (int i = 0; i < paths.length; i++) {
-			String thisPath = paths[i];
-			boolean foundExecConfig = false;
-
-			// Loop through all the configuration objects
-			for (int j = 0; j < configData.size(); j++) {
-				ConfigData thisConfig = configData.get(j);
-
-				// Since we're looking for executable paths, we only check AppData files
-				if (thisConfig.getClass().isInstance(new AppData())) {
-					AppData thisAppConfig = (AppData) thisConfig;
-
-					// If the executable path and the config path are the same, exit this loop
-					if (thisAppConfig.getExecName().equals(thisPath)) {
-						foundExecConfig = true;
-						break;
-					}
-				}
-			}
-
-			// If we looped through all the config files and didn't fin anything, add the
-			// path to the return list and also create a config object for that executable
-			if (!foundExecConfig) {
-				if (foundExecutables == null) {
-					foundExecutables = new ArrayList<String>();
-				}
-				foundExecutables.add(thisPath);
-				this.configData.add(new AppData(thisPath));
-			}
-		}
-		
-		//Return the list of executables that didn't match any config files
-		return foundExecutables.toArray(new String[foundExecutables.size()]);
 	}
 }
