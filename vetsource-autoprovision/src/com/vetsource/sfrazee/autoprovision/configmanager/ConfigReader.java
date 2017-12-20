@@ -236,6 +236,36 @@ public class ConfigReader {
 					// a string
 				} else if (Character.isDigit(variableString.charAt(i))) {
 					variable[1] = toInt(substring);
+					
+				} else if(firstChar == '[') {
+					ArrayList<String> inArray = new ArrayList<String>();
+					
+					int beginString = -1;
+					for(int j = 1; j < substring.length(); j++) {
+						char thisChar = substring.charAt(j);
+						
+						if(thisChar == ']') {
+							if(beginString != -1) {
+								inArray.add(substring.substring(beginString, j));
+							}
+							break;
+							
+						} else if(thisChar == ',') {
+							if(beginString != -1) {
+								inArray.add(substring.substring(beginString, j));
+								beginString = -1;
+							} else {
+								inArray.add("");
+							}
+							
+						} else if(Character.isJavaIdentifierPart(thisChar) || thisChar == '/' || thisChar == '-') {
+							if(beginString == -1) {
+								beginString = j;
+							}
+						}
+					}
+					
+					variable[1] = inArray.toArray(new String[inArray.size()]);
 				}
 			}
 		}
