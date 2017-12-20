@@ -19,7 +19,9 @@ public class InstallManager {
 		for (int i = 0; i < appConfigs.length; i++) {
 			// Some installers might be marked to not be installed, so don't install those
 			// ones
-			if ((boolean) appConfigs[i].getVariable("install") == true) {
+			AppData thisConfig = appConfigs[i];
+			System.out.println(thisConfig.getName()+ "\n" + thisConfig.getVariable("install"));
+			if (thisConfig.getVariable("install") != null && (boolean)thisConfig.getVariable("install") == true) {
 
 				// Create a new object for handling this executable's installation
 				installers.add(new ApplicationInstall(appConfigs[i].getExecName(), appConfigs[i].getName(),
