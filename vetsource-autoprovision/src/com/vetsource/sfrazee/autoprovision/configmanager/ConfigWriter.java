@@ -4,6 +4,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Map;
 
 public class ConfigWriter {
@@ -165,20 +166,29 @@ public class ConfigWriter {
 				// the beginning of the array to the current position and just drop this
 				// identifier string at the beginning
 				if (i != 0) {
-					//move first item to current index
+					// move first item to current index
 					variableStrings[i] = variableStrings[0];
 				}
-				
-				//Overwrite the first item in the array
+
+				// Overwrite the first item in the array
 				variableStrings[0] = "|" + thisValue;
 
 			} else {
-				//If the name is anything else, we just drop it in as normal
-				variableStrings[i] = thisKey + "=" + thisValue;
+
+				// The defualt array .toString method only returns the array identifier, so
+				// detect whether this object is an array and use the Arrays.toString method
+				// if it is an array to print it properly
+				if (thisValue.getClass().isArray()) {
+					variableStrings[i] = thisKey + "=" + Arrays.toString((String[]) thisValue);
+
+				} else {
+					// If the name is anything else, we just drop it in as normal
+					variableStrings[i] = thisKey + "=" + thisValue;
+				}
 			}
 		}
-		
-		//Return the array of writeable strings
+
+		// Return the array of writeable strings
 		return variableStrings;
 	}
 }
